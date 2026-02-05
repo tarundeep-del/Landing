@@ -295,27 +295,7 @@ body{
   }
 }
 </style>
-  <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbx0WXl3svqWIKZd60cpsMD_HY7W0STZUShn9VJa9o5mDLuEbMGSAZxlMYSRAeJoK6TY/exec";
-const form = document.getElementById("leadForm");
-
-form.addEventListener("submit", function(e) {
-  e.preventDefault();
-
-  fetch(scriptURL, {
-    method: "POST",
-    body: new FormData(form)
-  })
-  .then(response => {
-    alert("✅ Thank you! Your response has been submitted.");
-    form.reset();
-  })
-  .catch(error => {
-    alert("❌ Submission failed. Please try again.");
-    console.error(error);
-  });
-});
-</script>
+ 
 
 </head>
 
@@ -398,8 +378,33 @@ into a profitable career with expert guidance.
 </div>
 </section>
 
+  <script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbx0WXl3svqWIKZd60cpsMD_HY7W0STZUShn9VJa9o5mDLuEbMGSAZxlMYSRAeJoK6TY/exec";
+
+const form = document.getElementById("leadForm");
+
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  fetch(scriptURL, {
+    method: "POST",
+    body: new FormData(form)
+  })
+  .then(() => {
+    alert("✅ Thank you! Your response has been submitted.");
+    form.reset();
+  })
+  .catch((error) => {
+    alert("❌ Submission failed. Please try again.");
+    console.error("Error:", error);
+  });
+});
+</script>
+
+  
 </body>
 </html>
+
 
 
 
