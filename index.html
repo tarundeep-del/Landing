@@ -319,6 +319,25 @@ body{
 }
 
 }
+/* ===== HERO BLUE BACKGROUND FINAL FIX ===== */
+@media (max-width: 768px) {
+
+  .hero {
+    padding-bottom: 32px;     /* reduce extra blue */
+  }
+
+  .hero-content {
+    margin-bottom: 0;
+  }
+
+  /* Stop background from visually extending */
+  .hero::after {
+    content: "";
+    display: block;
+    height: 0;
+    clear: both;
+  }
+}
 
   
 }
@@ -428,6 +447,7 @@ form.addEventListener("submit", function(e){
 
 </body>
 </html>
+
 
 
 
