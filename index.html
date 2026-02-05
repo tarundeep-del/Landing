@@ -298,6 +298,25 @@ body{
   .hero-image {
     margin: 32px 0;
   }
+  /* ===== MOBILE HERO IMAGE + FORM SPACING FIX ===== */
+@media (max-width: 768px) {
+
+  .hero-image {
+    max-height: 320px;        /* prevents image from dominating */
+    margin: 24px 0 40px;     /* space before form */
+    border-radius: 22px;
+  }
+
+  .hero-image img {
+    object-fit: cover;
+    height: 100%;
+  }
+
+  .lead-form-container {
+    margin-top: 0;
+  }
+}
+
 }
 
   
@@ -409,4 +428,5 @@ form.addEventListener("submit", function(e){
 
 </body>
 </html>
+
 
