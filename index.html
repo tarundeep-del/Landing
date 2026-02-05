@@ -266,6 +266,41 @@ body{
   .benefits-grid{grid-template-columns:1fr}
   .benefit-card{padding:22px 20px}
   .benefit-card p{font-size:.88rem;line-height:1.5}
+/* ===== MOBILE OVERFLOW FIX (CRITICAL) ===== */
+@media (max-width: 768px) {
+
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .hero {
+    padding: 60px 0;
+  }
+
+  .container {
+    padding: 0 20px; /* reduce from 40px */
+  }
+
+  .hero-content {
+    grid-template-columns: 1fr !important;
+    width: 100%;
+  }
+
+  .hero-text,
+  .hero-image,
+  .lead-form-container {
+    max-width: 100% !important;
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .hero-image {
+    margin: 32px 0;
+  }
+}
+
+  
 }
 </style>
 </head>
@@ -374,3 +409,4 @@ form.addEventListener("submit", function(e){
 
 </body>
 </html>
+
