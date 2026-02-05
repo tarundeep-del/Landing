@@ -47,12 +47,14 @@ body {
     display: grid;
     grid-template-columns: 1.3fr 0.8fr 0.9fr;
     gap: 72px;
-    align-items: center;
+    align-items: stretch;        /* KEY: equal height */
+    min-height: 620px;
 }
 
 /* TEXT */
 .hero-text {
     max-width: 520px;
+    align-self: center;
 }
 
 .hero-text h1 {
@@ -76,12 +78,12 @@ body {
 
 /* IMAGE */
 .hero-image {
-    height: 560px;
-    max-width: 260px;
     border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 30px 80px rgba(0,0,0,0.35);
     justify-self: center;
+    height: 100%;
+    max-width: 260px;
 }
 
 .hero-image img {
@@ -100,6 +102,7 @@ body {
     box-shadow: 0 25px 70px rgba(0,0,0,0.35);
     max-width: 360px;
     justify-self: center;
+    height: 100%;               /* MATCH IMAGE */
 }
 
 .form-header {
@@ -197,8 +200,10 @@ body {
 
 .benefits-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);  /* FIXED 3x2 */
     gap: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .benefit-card {
@@ -232,7 +237,7 @@ body {
     color: var(--gray);
 }
 
-/* ================= MOBILE ================= */
+/* ================= RESPONSIVE ================= */
 @media (max-width: 992px) {
     .container {
         padding: 0 20px;
@@ -241,6 +246,7 @@ body {
     .hero-content {
         grid-template-columns: 1fr;
         gap: 40px;
+        min-height: auto;
     }
 
     .hero-text {
@@ -256,13 +262,18 @@ body {
         font-size: 1.1rem;
     }
 
-    .hero-image {
-        height: 360px;
+    .hero-image,
+    .lead-form-container {
+        height: auto;   /* REMOVE equal height on mobile */
         max-width: 100%;
+    }
+
+    .benefits-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     .hero {
         padding: 60px 0;
     }
@@ -272,12 +283,15 @@ body {
     }
 
     .lead-form-container {
-        max-width: 100%;
         padding: 28px 20px 32px;
     }
 
     .section-title {
         font-size: 2rem;
+    }
+
+    .benefits-grid {
+        grid-template-columns: 1fr;
     }
 }
 </style>
