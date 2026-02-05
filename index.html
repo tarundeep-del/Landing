@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Become a Fashion Entrepreneur - Start Your Journey Today</title>
+<title>Become a Fashion Entrepreneur</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,6 @@
     --dark: #1A1A2E;
     --light: #FFFFFF;
     --gray: #6B7280;
-    --success: #10B981;
 }
 
 * {
@@ -29,17 +28,14 @@
 
 body {
     font-family: 'DM Sans', sans-serif;
-    background: var(--light);
+    background: #ffffff;
     color: var(--dark);
-    overflow-x: hidden;
 }
 
-/* HERO */
+/* ================= HERO ================= */
 .hero {
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    background: linear-gradient(135deg, #243762 0%, #1A1A2E 100%);
+    background: linear-gradient(135deg, #243762, #1A1A2E);
     padding: 80px 0;
 }
 
@@ -56,17 +52,11 @@ body {
     align-items: center;
 }
 
-/* TEXT */
-.hero-text {
-    max-width: 540px;
-}
-
 .hero-text h1 {
     font-family: 'Syne', sans-serif;
     font-size: 3.5rem;
     font-weight: 800;
-    color: var(--light);
-    letter-spacing: -0.5px;
+    color: #fff;
 }
 
 .hero-text .highlight {
@@ -74,13 +64,11 @@ body {
 }
 
 .hero-text p {
+    margin-top: 20px;
     font-size: 1.25rem;
     color: rgba(255,255,255,0.9);
-    margin-top: 20px;
-    line-height: 1.6;
 }
 
-/* IMAGE */
 .hero-image {
     position: relative;
     height: 520px;
@@ -89,33 +77,18 @@ body {
     box-shadow: 0 30px 80px rgba(0,0,0,0.35);
 }
 
-.hero-image::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        to top,
-        rgba(26,26,46,0.55),
-        rgba(26,26,46,0.1)
-    );
-}
-
 .hero-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center top;
-    transform: scale(1.03);
 }
 
-/* FORM */
 .lead-form-container {
-    background: #ffffff;
+    background: #fff;
     border-radius: 24px;
     padding: 44px;
-    box-shadow:
-        0 30px 80px rgba(0,0,0,0.25),
-        0 10px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.25);
 }
 
 .form-header {
@@ -132,31 +105,19 @@ body {
 }
 
 .form-group label {
-    display: block;
     font-weight: 600;
+    display: block;
     margin-bottom: 6px;
 }
 
 .form-group input,
 .form-group select {
     width: 100%;
-    padding: 14px 16px;
+    padding: 14px;
     border-radius: 12px;
     border: 2px solid #E5E7EB;
-    background: #F9FAFB;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.25s ease;
 }
 
-.form-group input:focus,
-.form-group select:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: #ffffff;
-    box-shadow: 0 8px 20px rgba(242,101,34,0.2);
-}
-
-/* BUTTON */
 .submit-btn {
     width: 100%;
     padding: 16px;
@@ -164,28 +125,72 @@ body {
     color: #fff;
     border: none;
     border-radius: 14px;
-    font-size: 1.1rem;
     font-weight: 700;
-    font-family: 'Syne', sans-serif;
     cursor: pointer;
-    box-shadow: 0 15px 35px rgba(242,101,34,0.45);
-    transition: all 0.3s ease;
 }
 
-.submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 45px rgba(242,101,34,0.55);
+/* ================= BENEFITS ================= */
+.benefits {
+    padding: 90px 0;
+    background: #F9FAFB;
 }
 
-/* MOBILE */
+.section-title {
+    text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 2.6rem;
+    margin-bottom: 60px;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+}
+
+.benefit-card {
+    background: #fff;
+    padding: 36px;
+    border-radius: 20px;
+    border: 1px solid #E5E7EB;
+    transition: 0.3s ease;
+}
+
+.benefit-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+.benefit-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f26522, #FFD23F);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+
+.benefit-card h3 {
+    font-family: 'Syne', sans-serif;
+    margin-bottom: 12px;
+}
+
+.benefit-card p {
+    color: var(--gray);
+    line-height: 1.6;
+}
+
+/* ================= MOBILE ================= */
 @media (max-width: 992px) {
     .hero-content {
         grid-template-columns: 1fr;
-        gap: 40px;
     }
 
     .hero-text h1 {
-        font-size: 2.5rem;
+        font-size: 2.4rem;
         text-align: center;
     }
 
@@ -196,16 +201,13 @@ body {
     .hero-image {
         height: 360px;
     }
-
-    .lead-form-container {
-        padding: 28px 22px;
-    }
 }
 </style>
 </head>
 
 <body>
 
+<!-- HERO -->
 <section class="hero">
     <div class="container">
         <div class="hero-content">
@@ -216,7 +218,7 @@ body {
             </div>
 
             <div class="hero-image">
-                <img src="./logos/women.png" alt="Woman sewing in boutique">
+                <img src="./logos/women.png" alt="Fashion sewing">
             </div>
 
             <div class="lead-form-container">
@@ -244,6 +246,51 @@ body {
                 </form>
             </div>
 
+        </div>
+    </div>
+</section>
+
+<!-- BENEFITS -->
+<section class="benefits">
+    <div class="container">
+        <h2 class="section-title">Why Choose Us?</h2>
+
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">🎓</div>
+                <h3>Expert Instructors</h3>
+                <p>Learn from industry professionals and trainers from prestigious institutes like NIFT, NID, and UID.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">💼</div>
+                <h3>Business Setup Support</h3>
+                <p>Get dedicated assistance to set up your own fashion business with funding support up to ₹5 lakhs.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🏆</div>
+                <h3>Government Certificate</h3>
+                <p>Earn a recognized government certificate as we are officially registered and partnered with NSDC.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">👤</div>
+                <h3>1-on-1 Personalized Learning</h3>
+                <p>Get individual attention with personalized training sessions tailored to your goals.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🛠️</div>
+                <h3>Hands-on Projects</h3>
+                <p>Build real-world fashion projects to strengthen your portfolio and practical skills.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🎁</div>
+                <h3>Lifetime Fashion Kit</h3>
+                <p>Get your own personalized fashion designing kit that you can use for a lifetime.</p>
+            </div>
         </div>
     </div>
 </section>
