@@ -27,6 +27,7 @@
 body {
     font-family: 'DM Sans', sans-serif;
     background: #fff;
+    color: var(--dark);
 }
 
 /* ================= HERO ================= */
@@ -55,6 +56,7 @@ body {
     font-size: 3.5rem;
     font-weight: 800;
     color: #fff;
+    line-height: 1.1;
 }
 
 .hero-text .highlight {
@@ -65,6 +67,7 @@ body {
     margin-top: 20px;
     font-size: 1.25rem;
     color: rgba(255,255,255,0.9);
+    line-height: 1.6;
 }
 
 /* IMAGE */
@@ -211,23 +214,50 @@ body {
     margin-bottom: 20px;
 }
 
-/* MOBILE */
+/* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 992px) {
     .hero-content {
         grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .hero-text {
+        text-align: center;
     }
 
     .hero-text h1 {
         font-size: 2.4rem;
-        text-align: center;
     }
 
     .hero-text p {
-        text-align: center;
+        font-size: 1.1rem;
     }
 
     .hero-image {
         height: 360px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero {
+        padding: 60px 0;
+    }
+
+    .hero-text h1 {
+        font-size: 2rem;
+    }
+
+    .lead-form-container {
+        padding: 28px 20px 32px;
+        max-width: 100%;
+    }
+
+    .form-header h2 {
+        font-size: 1.6rem;
+    }
+
+    .section-title {
+        font-size: 2rem;
     }
 }
 </style>
@@ -284,7 +314,6 @@ body {
             </div>
 
             <button class="submit-btn">Get Free Demo Class →</button>
-
             <p class="privacy-text">🔒 Your information is safe and secure with us</p>
         </form>
     </div>
@@ -309,34 +338,6 @@ body {
 
 </div>
 </section>
-
-<!-- ================= FORM SCRIPT ================= -->
-<script>
-document.getElementById("leadForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-
-    const data = {
-        name: document.getElementById("name").value,
-        email: document.getElementById("email").value,
-        phone: document.getElementById("phone").value,
-        course: document.getElementById("course").value
-    };
-
-    fetch("https://script.google.com/macros/s/AKfycbx0WXl3svqWIKZd60cpsMD_HY7W0STZUShn9VJa9o5mDLuEbMGSAZxlMYSRAeJoK6TY/exec", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    })
-    .then(res => res.json())
-    .then(() => {
-        alert("Thank you! Your details have been submitted.");
-        document.getElementById("leadForm").reset();
-    })
-    .catch(() => {
-        alert("Something went wrong. Please try again.");
-    });
-});
-</script>
 
 </body>
 </html>
