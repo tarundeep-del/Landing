@@ -39,17 +39,19 @@ body{
 
 .hero-content{
   display:grid;
-  grid-template-columns:1.25fr 1.1fr 0.9fr;
+  grid-template-columns: 1.3fr 1fr 0.9fr; /* text gets priority */
   gap:64px;
-  align-items:stretch;
+  align-items:center;
 }
 
 /* ---------- HERO TEXT ---------- */
 .hero-text{
   position:relative;
-  max-width:520px;
+  max-width:520px;   /* HARD boundary */
   align-self:center;
+  z-index:3;         /* stays above image */
 }
+  
 
 .hero-text::before{
   content:"";
@@ -143,6 +145,7 @@ body{
   height:100%;
   justify-self:center;
   box-shadow:0 30px 80px rgba(0,0,0,.35);
+  z-index:1;         /* stays behind text */
 }
 
 .hero-image::before{
@@ -282,6 +285,15 @@ body{
   .benefits-grid{grid-template-columns:1fr}
   .hero-text h1{font-size:2rem}
 }
+  @media (max-width:1280px){
+  .hero-content{
+    grid-template-columns: 1fr 0.9fr;
+  }
+
+  .hero-image{
+    max-width:360px;
+  }
+}
 </style>
 </head>
 
@@ -350,3 +362,4 @@ into a profitable career with expert guidance.
 
 </body>
 </html>
+
