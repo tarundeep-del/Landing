@@ -28,7 +28,6 @@ body{
 .hero{
   background:linear-gradient(135deg,#243762,#1A1A2E);
   padding:90px 0;
-  overflow-x:hidden;
 }
 
 .container{
@@ -39,7 +38,7 @@ body{
 
 .hero-content{
   display:grid;
-  grid-template-columns: 1.3fr 1fr 0.9fr; /* text gets priority */
+  grid-template-columns:1.3fr 1fr 0.9fr;
   gap:64px;
   align-items:center;
 }
@@ -47,11 +46,9 @@ body{
 /* ---------- HERO TEXT ---------- */
 .hero-text{
   position:relative;
-  max-width:520px;   /* HARD boundary */
-  align-self:center;
-  z-index:3;         /* stays above image */
+  max-width:520px;
+  z-index:3;
 }
-  
 
 .hero-text::before{
   content:"";
@@ -67,10 +64,10 @@ body{
 
 .hero-text h1{
   font-family:'Syne',sans-serif;
-  font-size:3.1rem;   /* ↓ reduced */
+  font-size:3.1rem;
   font-weight:800;
   color:#fff;
-  line-height:1.1;    /* ↑ slightly for readability */
+  line-height:1.1;
   margin-bottom:18px;
 }
 
@@ -91,7 +88,7 @@ body{
 }
 
 .hero-subtext{
-  font-size:1rem;     /* ↓ reduced */
+  font-size:1rem;
   line-height:1.65;
   color:rgba(255,255,255,.9);
   margin-bottom:24px;
@@ -142,10 +139,7 @@ body{
   border-radius:28px;
   overflow:hidden;
   max-width:420px;
-  height:100%;
-  justify-self:center;
   box-shadow:0 30px 80px rgba(0,0,0,.35);
-  z-index:1;         /* stays behind text */
 }
 
 .hero-image::before{
@@ -173,8 +167,6 @@ body{
   padding:36px 28px 40px;
   border:3px solid var(--accent);
   max-width:360px;
-  height:100%;
-  justify-self:center;
   box-shadow:0 25px 70px rgba(0,0,0,.35);
 }
 
@@ -191,9 +183,8 @@ body{
 }
 
 @keyframes pulse{
-  0%{transform:scale(1)}
+  0%,100%{transform:scale(1)}
   50%{transform:scale(1.07)}
-  100%{transform:scale(1)}
 }
 
 .form-group{margin-bottom:16px}
@@ -243,13 +234,12 @@ body{
   padding:36px 32px;
   border-radius:20px;
   border:1px solid #E5E7EB;
-  transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease;
+  transition:.35s;
   box-shadow:0 6px 18px rgba(0,0,0,.05);
 }
 
 .benefit-card:hover{
   transform:translateY(-8px);
-  border-color:rgba(242,101,34,.5);
   box-shadow:0 14px 40px rgba(0,0,0,.12);
 }
 
@@ -264,39 +254,20 @@ body{
   margin-bottom:20px;
 }
 
-.benefit-card h3{
-  margin-bottom:10px;
-}
-
 .benefit-card p{
-  max-width:calc(100% - 10px);
   line-height:1.6;
   color:#6B7280;
   font-size:.95rem;
 }
 
-/* ================= RESPONSIVE ================= */
-@media(max-width:992px){
-  .hero-content{grid-template-columns:1fr}
-  .hero-image,.lead-form-container{height:auto;max-width:100%}
-  .benefits-grid{grid-template-columns:repeat(2,1fr)}
-}
+/* ===== MOBILE FIX (NO CONTENT LOSS) ===== */
 @media(max-width:600px){
-  .hero-text h1{font-size:1.9rem}
-  .hero-subtext{font-size:0.95rem}
-}
-  @media (max-width:1280px){
-  .hero-content{
-    grid-template-columns: 1fr 0.9fr;
-  }
-
-  .hero-image{
-    max-width:360px;
-  }
+  .hero-content{grid-template-columns:1fr}
+  .benefits-grid{grid-template-columns:1fr}
+  .benefit-card{padding:22px 20px}
+  .benefit-card p{font-size:.88rem;line-height:1.5}
 }
 </style>
- 
-
 </head>
 
 <body>
@@ -328,6 +299,7 @@ into a profitable career with expert guidance.
 <h2>Get Free Demo Class</h2>
 <p>Start your learning journey today!</p>
 </div>
+
 <form id="leadForm">
   <div class="form-group">
     <label>Full Name *</label>
@@ -353,11 +325,9 @@ into a profitable career with expert guidance.
     </select>
   </div>
 
-  <button type="submit" class="submit-btn">
-    Get Free Demo Class →
-  </button>
+  <button type="submit" class="submit-btn">Get Free Demo Class →</button>
+  <p id="formStatus" style="display:none;margin-top:14px;font-size:.9rem;text-align:center;"></p>
 </form>
-
 </div>
 
 </div>
@@ -378,34 +348,29 @@ into a profitable career with expert guidance.
 </div>
 </section>
 
-  <script>
+<script>
 const scriptURL = "https://script.google.com/macros/s/AKfycbx0WXl3svqWIKZd60cpsMD_HY7W0STZUShn9VJa9o5mDLuEbMGSAZxlMYSRAeJoK6TY/exec";
-
 const form = document.getElementById("leadForm");
+const status = document.getElementById("formStatus");
+const button = form.querySelector("button");
 
-form.addEventListener("submit", function (e) {
+form.addEventListener("submit", function(e){
   e.preventDefault();
-
-  fetch(scriptURL, {
-    method: "POST",
-    body: new FormData(form)
-  })
-  .then(() => {
-    alert("✅ Thank you! Your response has been submitted.");
+  status.style.display="block";
+  status.textContent="Submitting your details…";
+  button.disabled=true;
+  fetch(scriptURL,{method:"POST",body:new FormData(form)})
+  .then(()=>{
+    status.textContent="✅ Thank you! We’ll contact you shortly.";
     form.reset();
+    button.disabled=false;
   })
-  .catch((error) => {
-    alert("❌ Submission failed. Please try again.");
-    console.error("Error:", error);
+  .catch(()=>{
+    status.textContent="❌ Submission failed. Please try again.";
+    button.disabled=false;
   });
 });
 </script>
 
-  
 </body>
 </html>
-
-
-
-
-
