@@ -1052,6 +1052,17 @@ input[type="checkbox"] {
       </div>
     </div>
 
+    <!-- NEW: PENDING METRICS CARD -->
+    <div class="card-standard" style="background: var(--amber-50); border: 1px solid rgba(245,158,11,.3); padding: 18px 24px;">
+      <div style="display:flex; align-items:center; gap: 16px;">
+        <div class="card-icon card-icon-amber" style="width:48px; height:48px; font-size:22px; background: white; box-shadow: var(--s-sm);">📦</div>
+        <div>
+          <h2 style="margin:0; font-size:24px; font-weight:800; color:var(--amber-600); letter-spacing:-0.02em;" id="dashPendingCount">0</h2>
+          <p style="margin:2px 0 0 0; color:var(--text-2); font-weight:600; font-size: 13px;">Pending Kits (Awaiting Invoice & Dispatch)</p>
+        </div>
+      </div>
+    </div>
+
     <div class="card-standard">
       <div class="card-header">
         <h2>Kit Capacity Overview</h2>
@@ -1563,6 +1574,7 @@ function fetchAllData() {
   const d = new Date();
   document.getElementById('dashChartMonth').value = d.getMonth() + 1;
   document.getElementById('dashChartYear').value = d.getFullYear();
+  
   apiCall("getInitialPayload").then(data => {
     appData = data;
     renderDashboard(data.predictions);
@@ -1571,6 +1583,20 @@ function fetchAllData() {
     renderLowStock(data.stockSummary);
     loadDashboardChart();
     toggleButtons(false);
+  });
+
+  // Fetch Pending Invoice Count for Dashboard Metric Card
+  apiCall("getPendingInvoices", "GET").then(data => {
+    let invoiceArray = [];
+    if (data && Array.isArray(data.invoices)) invoiceArray = data.invoices;
+    else if (Array.isArray(data)) invoiceArray = data;
+    else if (data && typeof data === 'object') invoiceArray = data.invoices || data.data || [];
+    
+    const count = invoiceArray.length;
+    document.getElementById("dashPendingCount").innerText = count;
+    document.getElementById("pendingCount").innerText = count;
+  }).catch(err => {
+    console.error("Error fetching dashboard metrics:", err);
   });
 }
 window.onload = function () { fetchAllData(); };
@@ -1941,6 +1967,7 @@ function loadPendingInvoices() {
     
     // Update Pending Count
     document.getElementById("pendingCount").innerText = invoiceArray.length;
+    document.getElementById("dashPendingCount").innerText = invoiceArray.length; // Sync with dashboard
 
     if (!invoiceArray || invoiceArray.length === 0) {
       document.getElementById("pendingInvoicesTable").innerHTML = "<tr><td colspan='9' class='state-empty'>No pending invoices found.</td></tr>";
