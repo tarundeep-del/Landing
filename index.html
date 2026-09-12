@@ -1078,6 +1078,29 @@ input[type="checkbox"] {
       <div id="kitBarChart" style="height:380px; width:100%;"></div>
     </div>
 
+    <!-- NEW: PENDING ORDERS & ADDRESSES -->
+    <div class="card-grid" style="margin-bottom: 20px;">
+      <div class="card-standard" style="margin-bottom: 0;">
+        <div class="card-header">
+          <h2>Pending Kits (To be Dispatched)</h2>
+          <div class="card-icon card-icon-red">⏳</div>
+        </div>
+        <div id="pendingKitsChart" style="height:280px; width:100%;"><span class="loading" style="padding: 20px; display: block;">Loading pending data…</span></div>
+      </div>
+
+      <div class="card-standard" style="margin-bottom: 0;">
+        <div class="card-header">
+          <h2>Action Required: Missing Addresses</h2>
+          <div class="card-icon card-icon-red">📍</div>
+        </div>
+        <div style="text-align:center; padding: 30px 20px;">
+          <h3 style="font-size: 56px; color: var(--red-600); margin: 0; line-height: 1;" id="missingAddressCount">-</h3>
+          <p style="color: var(--text-2); font-weight: 500; font-size: 14px; margin-top: 8px;">Pending orders without a valid delivery address</p>
+          <button class="btn-outline" onclick="showPage('invoicing')" style="margin-top: 24px;">Go to Invoicing to Check</button>
+        </div>
+      </div>
+    </div>
+
     <div class="card-grid">
       <div class="card">
         <div class="card-header">
@@ -1541,7 +1564,10 @@ function showPage(page) {
   const tb = document.getElementById('topbarTitle');
   if (tb) tb.textContent = pageTitles[page] || page;
 
-  if (page === "dashboard") loadDashboardChart();
+  if (page === "dashboard") {
+    loadDashboardChart();
+    loadPendingDashboardData();
+  }
   if (page === "stock") renderStock(appData.stockSummary);
   if (page === "lowStock") renderLowStock(appData.stockSummary);
   if (page === "inStock") loadInStock();
@@ -1570,6 +1596,7 @@ function fetchAllData() {
     renderStock(data.stockSummary);
     renderLowStock(data.stockSummary);
     loadDashboardChart();
+    loadPendingDashboardData();
     toggleButtons(false);
   });
 }
@@ -1906,6 +1933,74 @@ function loadDashboardChart() {
   }).catch(() => {
     myChart.dispose();
     chartDom.innerHTML = "<div style='text-align:center; padding-top:140px; color:var(--red-600);'>Error loading chart data.</div>";
+  });
+}
+
+/* ---- Pending Dashboard Data (Graph & Addresses) ---- */
+function loadPendingDashboardData() {
+  const chartDom = document.getElementById("pendingKitsChart");
+  if(!chartDom) return;
+  
+  let myChart = echarts.getInstanceByDom(chartDom);
+  if (myChart) echarts.dispose(myChart);
+  myChart = echarts.init(chartDom);
+  myChart.showLoading({ text: 'Fetching pending orders…', color: '#ef4444', fontSize: 13 });
+
+  apiCall("getPendingInvoices", "GET").then(data => {
+    myChart.hideLoading();
+    let invoiceArray = [];
+    if (data && Array.isArray(data.invoices)) invoiceArray = data.invoices;
+    else if (Array.isArray(data)) invoiceArray = data;
+    else if (data && typeof data === 'object') invoiceArray = data.invoices || data.data || [];
+
+    let missingAddress = 0;
+    const kitCounts = {};
+
+    invoiceArray.forEach(inv => {
+      // 1. Check for Missing Address
+      const addr = String(inv.address || "").trim();
+      if (addr === "" || addr === "-" || addr.toLowerCase() === "null") {
+        missingAddress++;
+      }
+
+      // 2. Count Kits for the Graph
+      const kitName = String(inv.desc || inv.course || "Unknown Kit").trim();
+      if(kitName) {
+        kitCounts[kitName] = (kitCounts[kitName] || 0) + 1;
+      }
+    });
+
+    // Update the Address Metric
+    const addrElem = document.getElementById("missingAddressCount");
+    if(addrElem) addrElem.innerText = missingAddress;
+
+    // Prepare Graph Data
+    const kits = Object.keys(kitCounts);
+    const quantities = Object.values(kitCounts);
+
+    if (kits.length === 0) {
+      myChart.dispose();
+      chartDom.innerHTML = "<div style='text-align:center; padding-top:100px; color:var(--text-3); font-weight:500;'>No pending kits found! 🎉</div>";
+      return;
+    }
+
+    // Render Horizontal Bar Chart
+    myChart.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: '#0f172a', borderColor: '#1e293b', textStyle: { color: '#f1f5f9', fontSize: 13 } },
+      grid: { left: '2%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
+      xAxis: { type: 'value', splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } } },
+      yAxis: { type: 'category', data: kits, axisLabel: { color: '#475569', fontSize: 11, width: 120, overflow: 'truncate' }, axisLine: { lineStyle: { color: '#e2e8f0' } } },
+      series: [{ 
+        name: 'Pending to Dispatch', 
+        type: 'bar', 
+        data: quantities, 
+        label: { show: true, position: 'right', color: '#ef4444', fontWeight: 'bold' },
+        itemStyle: { color: { type: 'linear', x: 1, y: 0, x2: 0, y2: 0, colorStops: [{ offset: 0, color: '#ef4444' }, { offset: 1, color: '#f87171' }] }, borderRadius: [0, 4, 4, 0] } 
+      }]
+    });
+  }).catch(err => {
+    myChart.dispose();
+    chartDom.innerHTML = "<div style='text-align:center; padding-top:100px; color:var(--red-600);'>Error loading pending data.</div>";
   });
 }
 
