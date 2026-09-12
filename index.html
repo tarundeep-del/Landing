@@ -354,6 +354,41 @@ h3 { font-size: 13px; font-weight: 600; color: var(--text-2); margin: 0 0 12px; 
 .card button { margin-top: auto; }
 
 /* ===================================
+   GAUGE GRID
+=================================== */
+.gauge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.gauge {
+  text-align: center;
+  padding: 20px 16px;
+  background: var(--bg);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.2s;
+}
+
+.gauge:hover { box-shadow: var(--s-md); }
+
+.gauge h3 {
+  min-height: 36px;
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+/* ===================================
    FORMS & INPUTS
 =================================== */
 .form-group {
@@ -1209,6 +1244,51 @@ input[type="checkbox"] {
       </div>
       <div class="btn-row">
         <button id="btnFetchSales" onclick="triggerFetchSales()" class="btn-outline" style="width:auto;">🔄 Fetch Sales Data</button>
+        <button id="btnToggleManualInvoice" onclick="toggleManualInvoiceForm()" class="btn-outline" style="width:auto;">+ Create Manual Invoice</button>
+      </div>
+    </div>
+
+    <!-- NEW: MANUAL INVOICE FORM CARD -->
+    <div class="card-standard" id="manualInvoiceFormCard" style="display:none; background: var(--amber-50); border-color: var(--amber-200);">
+      <h2 style="color: var(--amber-600); margin-bottom: 20px;">Create Custom Invoice</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+        <div>
+          <label class="form-label">Customer Name</label>
+          <input type="text" id="miName" placeholder="e.g. John Doe">
+        </div>
+        <div>
+          <label class="form-label">Phone Number</label>
+          <input type="number" id="miPhone" placeholder="e.g. 9876543210">
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">Delivery Address</label>
+          <input type="text" id="miAddress" placeholder="Full Address">
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label class="form-label">Description / Course / Kit</label>
+          <input type="text" id="miDesc" placeholder="e.g. Professional Fashion Designing">
+        </div>
+        <div>
+          <label class="form-label">Unit Price (₹)</label>
+          <input type="number" id="miUnitPrice" placeholder="e.g. 3500" oninput="calcMiTotal()">
+        </div>
+        <div>
+          <label class="form-label">Units (Qty)</label>
+          <input type="number" id="miQty" placeholder="e.g. 1" oninput="calcMiTotal()">
+        </div>
+        <div>
+          <label class="form-label">Total Price (₹)</label>
+          <input type="number" id="miTotal" placeholder="Calculated Total" readonly style="background: var(--surface);">
+        </div>
+      </div>
+      <div class="gst-row" style="margin-top:14px;">
+        <input type="checkbox" id="miHasCod" onchange="toggleMiCod()">
+        <label for="miHasCod">Is this a COD order?</label>
+        <input type="number" id="miCodAmt" placeholder="COD Amount (₹)">
+      </div>
+      <div class="btn-row" style="margin-top: 24px;">
+        <button id="btnSaveMi" onclick="submitManualInvoice()" style="width:auto;">Generate Invoice PDF</button>
+        <button class="btn-cancel" onclick="toggleManualInvoiceForm(false)" style="display:inline-flex;">Cancel</button>
       </div>
     </div>
 
@@ -2032,6 +2112,80 @@ function switchInvoiceView(view) {
     document.getElementById('tab-pending').classList.remove('active');
     loadGeneratedInvoices();
   }
+}
+
+// NEW: Manual Invoice UI Toggle & Submission Logic
+function toggleManualInvoiceForm(show) {
+  const card = document.getElementById("manualInvoiceFormCard");
+  const btn = document.getElementById("btnToggleManualInvoice");
+  
+  if (show === false || card.style.display === "block") {
+    card.style.display = "none";
+    btn.innerHTML = "+ Create Manual Invoice";
+    btn.style.background = "var(--surface)";
+    btn.style.color = "var(--text-1)";
+  } else {
+    card.style.display = "block";
+    btn.innerHTML = "✖ Close Form";
+    btn.style.background = "var(--red-100)";
+    btn.style.color = "var(--red-600)";
+  }
+}
+
+function toggleMiCod() {
+  document.getElementById("miCodAmt").style.display = document.getElementById("miHasCod").checked ? "block" : "none";
+}
+
+function calcMiTotal() {
+  const price = Number(document.getElementById("miUnitPrice").value) || 0;
+  const qty = Number(document.getElementById("miQty").value) || 0;
+  document.getElementById("miTotal").value = price * qty;
+}
+
+function submitManualInvoice() {
+  const payload = {
+    name: document.getElementById("miName").value,
+    phone: document.getElementById("miPhone").value,
+    address: document.getElementById("miAddress").value,
+    desc: document.getElementById("miDesc").value,
+    unitPrice: document.getElementById("miUnitPrice").value,
+    qty: document.getElementById("miQty").value,
+    total: document.getElementById("miTotal").value,
+    hasCod: document.getElementById("miHasCod").checked,
+    codAmt: document.getElementById("miCodAmt").value
+  };
+
+  if (!payload.name || !payload.phone || !payload.unitPrice || !payload.qty) {
+    return showToast("Please fill Name, Phone, Unit Price, and Units.", true);
+  }
+
+  const btn = document.getElementById("btnSaveMi");
+  btn.disabled = true; 
+  btn.innerText = "Generating PDF...";
+  
+  apiCall("createManualInvoice", "POST", payload).then(res => {
+    showToast(res.message);
+    toggleManualInvoiceForm(false);
+    btn.disabled = false; 
+    btn.innerText = "Generate Invoice PDF";
+    
+    document.getElementById("miName").value = '';
+    document.getElementById("miPhone").value = '';
+    document.getElementById("miAddress").value = '';
+    document.getElementById("miDesc").value = '';
+    document.getElementById("miUnitPrice").value = '';
+    document.getElementById("miQty").value = '';
+    document.getElementById("miTotal").value = '';
+    document.getElementById("miHasCod").checked = false;
+    document.getElementById("miCodAmt").value = '';
+    toggleMiCod();
+    
+    switchInvoiceView('generated'); 
+  }).catch(err => {
+    showToast("Failed to generate manual invoice", true);
+    btn.disabled = false; 
+    btn.innerText = "Generate Invoice PDF";
+  });
 }
 
 function loadPendingInvoices() {
