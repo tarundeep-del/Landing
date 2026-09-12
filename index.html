@@ -1124,24 +1124,6 @@ input[type="checkbox"] {
         </div>
         <button id="btnStock" onclick="submitStockEntry()">Add to Stock</button>
       </div>
-      
-      <!-- NEW: Kit Entry (IN) -->
-      <div class="card">
-        <div class="card-header">
-          <h2>Kit Entry (IN)</h2>
-          <div class="card-icon card-icon-green">📦</div>
-        </div>
-        <select id="kitInSelect"><option></option></select>
-        <input type="number" id="kitInQty" placeholder="Quantity">
-        <select id="kitInVendorSelect"><option></option></select>
-        <input type="number" id="kitInPrice" placeholder="Price Per Kit (₹)">
-        <div class="gst-row">
-          <input type="checkbox" id="kitInHasGst" onchange="toggleKitInGst()">
-          <label for="kitInHasGst">Apply GST</label>
-          <input type="number" id="kitInGstPercent" placeholder="GST %">
-        </div>
-        <button id="btnKitInStock" onclick="submitKitStockEntry()">Add Kit to Stock</button>
-      </div>
 
       <div class="card">
         <div class="card-header">
@@ -1524,12 +1506,10 @@ function toggleButtons(disabled) {
   document.getElementById("btnDispatch").disabled = disabled;
   document.getElementById("btnDispatchItem").disabled = disabled;
   document.getElementById("btnStock").disabled = disabled;
-  document.getElementById("btnKitInStock").disabled = disabled;
   document.getElementById("btnSubmitBill").disabled = disabled;
   document.getElementById("btnDispatch").innerText = disabled ? "Processing…" : "Dispatch Kit";
   document.getElementById("btnDispatchItem").innerText = disabled ? "Processing…" : "Dispatch Item";
   document.getElementById("btnStock").innerText = disabled ? "Processing…" : "Add to Stock";
-  document.getElementById("btnKitInStock").innerText = disabled ? "Processing…" : "Add Kit to Stock";
   document.getElementById("btnSubmitBill").innerText = disabled ? "Uploading…" : "Save Bill";
 }
 
@@ -1543,11 +1523,6 @@ function toggleGst() {
   const gstInput = document.getElementById("gstPercent");
   gstInput.style.display = document.getElementById("hasGst").checked ? "block" : "none";
   if (!document.getElementById("hasGst").checked) gstInput.value = "";
-}
-function toggleKitInGst() {
-  const gstInput = document.getElementById("kitInGstPercent");
-  gstInput.style.display = document.getElementById("kitInHasGst").checked ? "block" : "none";
-  if (!document.getElementById("kitInHasGst").checked) gstInput.value = "";
 }
 
 /* ---- Page Navigation ---- */
@@ -1649,7 +1624,6 @@ function renderLowStock(data) {
 function renderDropdowns(products, kits, vendors) {
   const stockSelect = $("#stockSelect"), kitSelect = $("#kitSelect"), vendorSelect = $("#vendorSelect"), partnerSelect = $("#deliveryPartner");
   const itemOutSelect = $("#itemOutSelect"), itemOutPartner = $("#itemOutPartner");
-  const kitInSelect = $("#kitInSelect"), kitInVendorSelect = $("#kitInVendorSelect");
 
   if (stockSelect.hasClass("select2-hidden-accessible")) stockSelect.select2('destroy');
   if (kitSelect.hasClass("select2-hidden-accessible")) kitSelect.select2('destroy');
@@ -1657,21 +1631,25 @@ function renderDropdowns(products, kits, vendors) {
   if (vendorSelect.hasClass("select2-hidden-accessible")) vendorSelect.select2('destroy');
   if (partnerSelect.hasClass("select2-hidden-accessible")) partnerSelect.select2('destroy');
   if (itemOutPartner.hasClass("select2-hidden-accessible")) itemOutPartner.select2('destroy');
-  if (kitInSelect.hasClass("select2-hidden-accessible")) kitInSelect.select2('destroy');
-  if (kitInVendorSelect.hasClass("select2-hidden-accessible")) kitInVendorSelect.select2('destroy');
 
-  const prodHtml = '<option></option>' + products.map(p => `<option value="${p}">${p}</option>`).join('');
-  const kitHtml = '<option></option>' + kits.map(k => `<option value="${k}">${k}</option>`).join('');
+  const prodHtml = products.map(p => `<option value="${p}">${p}</option>`).join('');
+  const kitHtml = kits.map(k => `<option value="${k}">${k}</option>`).join('');
+  
+  // Merge Kits and Products for the unified Stock Entry (IN) dropdown
+  const mergedInwardHtml = '<option></option>' + 
+    '<optgroup label="Complete Kits">' + kitHtml + '</optgroup>' + 
+    '<optgroup label="Raw Items">' + prodHtml + '</optgroup>';
+
   const vendorHtml = '<option></option>' + (vendors || []).map(v => `<option value="${v.name}">${v.name}</option>`).join('');
   
-  stockSelect.html(prodHtml).select2({ placeholder: "Search item…", width: '100%' });
-  itemOutSelect.html(prodHtml).select2({ placeholder: "Search item to dispatch…", width: '100%' });
-  kitSelect.html(kitHtml).select2({ placeholder: "Search kit…", width: '100%' });
+  stockSelect.html(mergedInwardHtml).select2({ placeholder: "Search item or kit…", width: '100%' });
+  
+  itemOutSelect.html('<option></option>' + prodHtml).select2({ placeholder: "Search item to dispatch…", width: '100%' });
+  kitSelect.html('<option></option>' + kitHtml).select2({ placeholder: "Search kit…", width: '100%' });
+  
   vendorSelect.html(vendorHtml).select2({ placeholder: "Select vendor (optional)", width: '100%' });
   partnerSelect.select2({ placeholder: "Select delivery partner…", width: '100%', minimumResultsForSearch: Infinity });
   itemOutPartner.select2({ placeholder: "Select delivery partner…", width: '100%', minimumResultsForSearch: Infinity });
-  kitInSelect.html(kitHtml).select2({ placeholder: "Search kit to add…", width: '100%' });
-  kitInVendorSelect.html(vendorHtml).select2({ placeholder: "Select vendor (optional)", width: '100%' });
 }
 
 /* ---- Actions ---- */
@@ -1708,17 +1686,35 @@ function dispatchItem() {
 }
 
 function submitStockEntry() {
+  const selectedValue = document.getElementById("stockSelect").value;
+  const qty = document.getElementById("stockQty").value;
+  const vendor = document.getElementById("vendorSelect").value;
+  const price = document.getElementById("stockPrice").value;
+  const hasGst = document.getElementById("hasGst").checked;
+  const gstPercent = document.getElementById("gstPercent").value;
+
+  if (!selectedValue || !qty || qty <= 0) return showToast("Please select an item or kit and valid quantity.", true);
+  
+  // Determine if it is a Kit or a Raw Item based on appData
+  const isKit = appData.kits.includes(selectedValue);
+  const action = isKit ? "addStockByKit" : "addStock";
+  
   const payload = {
-    product: document.getElementById("stockSelect").value,
-    qty: document.getElementById("stockQty").value,
-    vendor: document.getElementById("vendorSelect").value,
-    price: document.getElementById("stockPrice").value,
-    hasGst: document.getElementById("hasGst").checked,
-    gstPercent: document.getElementById("gstPercent").value
+    qty: qty, 
+    vendor: vendor, 
+    price: price, 
+    hasGst: hasGst, 
+    gstPercent: gstPercent
   };
-  if (!payload.product || !payload.qty || payload.qty <= 0) return showToast("Please select an item and valid quantity.", true);
+  
+  if (isKit) {
+    payload.kit = selectedValue;
+  } else {
+    payload.product = selectedValue;
+  }
+
   toggleButtons(true);
-  apiCall("addStock", "POST", payload).then(res => {
+  apiCall(action, "POST", payload).then(res => {
     showToast(res.message);
     document.getElementById("stockQty").value = '';
     document.getElementById("stockPrice").value = '';
@@ -1727,30 +1723,6 @@ function submitStockEntry() {
     document.getElementById("gstPercent").style.display = 'none';
     $("#stockSelect").val(null).trigger('change');
     $("#vendorSelect").val(null).trigger('change');
-    fetchAllData();
-  }).catch(() => toggleButtons(false));
-}
-
-function submitKitStockEntry() {
-  const payload = {
-    kit: document.getElementById("kitInSelect").value,
-    qty: document.getElementById("kitInQty").value,
-    vendor: document.getElementById("kitInVendorSelect").value,
-    price: document.getElementById("kitInPrice").value,
-    hasGst: document.getElementById("kitInHasGst").checked,
-    gstPercent: document.getElementById("kitInGstPercent").value
-  };
-  if (!payload.kit || !payload.qty || payload.qty <= 0) return showToast("Please select a kit and valid quantity.", true);
-  toggleButtons(true);
-  apiCall("addStockByKit", "POST", payload).then(res => {
-    showToast(res.message);
-    document.getElementById("kitInQty").value = '';
-    document.getElementById("kitInPrice").value = '';
-    document.getElementById("kitInHasGst").checked = false;
-    document.getElementById("kitInGstPercent").value = '';
-    document.getElementById("kitInGstPercent").style.display = 'none';
-    $("#kitInSelect").val(null).trigger('change');
-    $("#kitInVendorSelect").val(null).trigger('change');
     fetchAllData();
   }).catch(() => toggleButtons(false));
 }
