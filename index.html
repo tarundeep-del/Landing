@@ -1052,17 +1052,6 @@ input[type="checkbox"] {
       </div>
     </div>
 
-    <!-- NEW: PENDING METRICS CARD -->
-    <div class="card-standard" style="background: var(--amber-50); border: 1px solid rgba(245,158,11,.3); padding: 18px 24px;">
-      <div style="display:flex; align-items:center; gap: 16px;">
-        <div class="card-icon card-icon-amber" style="width:48px; height:48px; font-size:22px; background: white; box-shadow: var(--s-sm);">📦</div>
-        <div>
-          <h2 style="margin:0; font-size:24px; font-weight:800; color:var(--amber-600); letter-spacing:-0.02em;" id="dashPendingCount">0</h2>
-          <p style="margin:2px 0 0 0; color:var(--text-2); font-weight:600; font-size: 13px;">Pending Kits (Awaiting Invoice & Dispatch)</p>
-        </div>
-      </div>
-    </div>
-
     <div class="card-standard">
       <div class="card-header">
         <h2>Kit Capacity Overview</h2>
@@ -1134,6 +1123,24 @@ input[type="checkbox"] {
           <input type="number" id="gstPercent" placeholder="GST %">
         </div>
         <button id="btnStock" onclick="submitStockEntry()">Add to Stock</button>
+      </div>
+      
+      <!-- NEW: Kit Entry (IN) -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Kit Entry (IN)</h2>
+          <div class="card-icon card-icon-green">📦</div>
+        </div>
+        <select id="kitInSelect"><option></option></select>
+        <input type="number" id="kitInQty" placeholder="Quantity">
+        <select id="kitInVendorSelect"><option></option></select>
+        <input type="number" id="kitInPrice" placeholder="Price Per Kit (₹)">
+        <div class="gst-row">
+          <input type="checkbox" id="kitInHasGst" onchange="toggleKitInGst()">
+          <label for="kitInHasGst">Apply GST</label>
+          <input type="number" id="kitInGstPercent" placeholder="GST %">
+        </div>
+        <button id="btnKitInStock" onclick="submitKitStockEntry()">Add Kit to Stock</button>
       </div>
 
       <div class="card">
@@ -1517,10 +1524,12 @@ function toggleButtons(disabled) {
   document.getElementById("btnDispatch").disabled = disabled;
   document.getElementById("btnDispatchItem").disabled = disabled;
   document.getElementById("btnStock").disabled = disabled;
+  document.getElementById("btnKitInStock").disabled = disabled;
   document.getElementById("btnSubmitBill").disabled = disabled;
   document.getElementById("btnDispatch").innerText = disabled ? "Processing…" : "Dispatch Kit";
   document.getElementById("btnDispatchItem").innerText = disabled ? "Processing…" : "Dispatch Item";
   document.getElementById("btnStock").innerText = disabled ? "Processing…" : "Add to Stock";
+  document.getElementById("btnKitInStock").innerText = disabled ? "Processing…" : "Add Kit to Stock";
   document.getElementById("btnSubmitBill").innerText = disabled ? "Uploading…" : "Save Bill";
 }
 
@@ -1534,6 +1543,11 @@ function toggleGst() {
   const gstInput = document.getElementById("gstPercent");
   gstInput.style.display = document.getElementById("hasGst").checked ? "block" : "none";
   if (!document.getElementById("hasGst").checked) gstInput.value = "";
+}
+function toggleKitInGst() {
+  const gstInput = document.getElementById("kitInGstPercent");
+  gstInput.style.display = document.getElementById("kitInHasGst").checked ? "block" : "none";
+  if (!document.getElementById("kitInHasGst").checked) gstInput.value = "";
 }
 
 /* ---- Page Navigation ---- */
@@ -1574,7 +1588,6 @@ function fetchAllData() {
   const d = new Date();
   document.getElementById('dashChartMonth').value = d.getMonth() + 1;
   document.getElementById('dashChartYear').value = d.getFullYear();
-  
   apiCall("getInitialPayload").then(data => {
     appData = data;
     renderDashboard(data.predictions);
@@ -1583,20 +1596,6 @@ function fetchAllData() {
     renderLowStock(data.stockSummary);
     loadDashboardChart();
     toggleButtons(false);
-  });
-
-  // Fetch Pending Invoice Count for Dashboard Metric Card
-  apiCall("getPendingInvoices", "GET").then(data => {
-    let invoiceArray = [];
-    if (data && Array.isArray(data.invoices)) invoiceArray = data.invoices;
-    else if (Array.isArray(data)) invoiceArray = data;
-    else if (data && typeof data === 'object') invoiceArray = data.invoices || data.data || [];
-    
-    const count = invoiceArray.length;
-    document.getElementById("dashPendingCount").innerText = count;
-    document.getElementById("pendingCount").innerText = count;
-  }).catch(err => {
-    console.error("Error fetching dashboard metrics:", err);
   });
 }
 window.onload = function () { fetchAllData(); };
@@ -1650,21 +1649,29 @@ function renderLowStock(data) {
 function renderDropdowns(products, kits, vendors) {
   const stockSelect = $("#stockSelect"), kitSelect = $("#kitSelect"), vendorSelect = $("#vendorSelect"), partnerSelect = $("#deliveryPartner");
   const itemOutSelect = $("#itemOutSelect"), itemOutPartner = $("#itemOutPartner");
+  const kitInSelect = $("#kitInSelect"), kitInVendorSelect = $("#kitInVendorSelect");
+
   if (stockSelect.hasClass("select2-hidden-accessible")) stockSelect.select2('destroy');
   if (kitSelect.hasClass("select2-hidden-accessible")) kitSelect.select2('destroy');
   if (itemOutSelect.hasClass("select2-hidden-accessible")) itemOutSelect.select2('destroy');
   if (vendorSelect.hasClass("select2-hidden-accessible")) vendorSelect.select2('destroy');
   if (partnerSelect.hasClass("select2-hidden-accessible")) partnerSelect.select2('destroy');
   if (itemOutPartner.hasClass("select2-hidden-accessible")) itemOutPartner.select2('destroy');
+  if (kitInSelect.hasClass("select2-hidden-accessible")) kitInSelect.select2('destroy');
+  if (kitInVendorSelect.hasClass("select2-hidden-accessible")) kitInVendorSelect.select2('destroy');
+
   const prodHtml = '<option></option>' + products.map(p => `<option value="${p}">${p}</option>`).join('');
   const kitHtml = '<option></option>' + kits.map(k => `<option value="${k}">${k}</option>`).join('');
   const vendorHtml = '<option></option>' + (vendors || []).map(v => `<option value="${v.name}">${v.name}</option>`).join('');
+  
   stockSelect.html(prodHtml).select2({ placeholder: "Search item…", width: '100%' });
   itemOutSelect.html(prodHtml).select2({ placeholder: "Search item to dispatch…", width: '100%' });
   kitSelect.html(kitHtml).select2({ placeholder: "Search kit…", width: '100%' });
   vendorSelect.html(vendorHtml).select2({ placeholder: "Select vendor (optional)", width: '100%' });
   partnerSelect.select2({ placeholder: "Select delivery partner…", width: '100%', minimumResultsForSearch: Infinity });
   itemOutPartner.select2({ placeholder: "Select delivery partner…", width: '100%', minimumResultsForSearch: Infinity });
+  kitInSelect.html(kitHtml).select2({ placeholder: "Search kit to add…", width: '100%' });
+  kitInVendorSelect.html(vendorHtml).select2({ placeholder: "Select vendor (optional)", width: '100%' });
 }
 
 /* ---- Actions ---- */
@@ -1720,6 +1727,30 @@ function submitStockEntry() {
     document.getElementById("gstPercent").style.display = 'none';
     $("#stockSelect").val(null).trigger('change');
     $("#vendorSelect").val(null).trigger('change');
+    fetchAllData();
+  }).catch(() => toggleButtons(false));
+}
+
+function submitKitStockEntry() {
+  const payload = {
+    kit: document.getElementById("kitInSelect").value,
+    qty: document.getElementById("kitInQty").value,
+    vendor: document.getElementById("kitInVendorSelect").value,
+    price: document.getElementById("kitInPrice").value,
+    hasGst: document.getElementById("kitInHasGst").checked,
+    gstPercent: document.getElementById("kitInGstPercent").value
+  };
+  if (!payload.kit || !payload.qty || payload.qty <= 0) return showToast("Please select a kit and valid quantity.", true);
+  toggleButtons(true);
+  apiCall("addStockByKit", "POST", payload).then(res => {
+    showToast(res.message);
+    document.getElementById("kitInQty").value = '';
+    document.getElementById("kitInPrice").value = '';
+    document.getElementById("kitInHasGst").checked = false;
+    document.getElementById("kitInGstPercent").value = '';
+    document.getElementById("kitInGstPercent").style.display = 'none';
+    $("#kitInSelect").val(null).trigger('change');
+    $("#kitInVendorSelect").val(null).trigger('change');
     fetchAllData();
   }).catch(() => toggleButtons(false));
 }
@@ -1967,7 +1998,6 @@ function loadPendingInvoices() {
     
     // Update Pending Count
     document.getElementById("pendingCount").innerText = invoiceArray.length;
-    document.getElementById("dashPendingCount").innerText = invoiceArray.length; // Sync with dashboard
 
     if (!invoiceArray || invoiceArray.length === 0) {
       document.getElementById("pendingInvoicesTable").innerHTML = "<tr><td colspan='9' class='state-empty'>No pending invoices found.</td></tr>";
