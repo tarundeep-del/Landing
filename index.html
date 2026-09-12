@@ -354,41 +354,6 @@ h3 { font-size: 13px; font-weight: 600; color: var(--text-2); margin: 0 0 12px; 
 .card button { margin-top: auto; }
 
 /* ===================================
-   GAUGE GRID
-=================================== */
-.gauge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 16px;
-}
-
-.gauge {
-  text-align: center;
-  padding: 20px 16px;
-  background: var(--bg);
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: box-shadow 0.2s;
-}
-
-.gauge:hover { box-shadow: var(--s-md); }
-
-.gauge h3 {
-  min-height: 36px;
-  margin: 0 0 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-2);
-  text-transform: none;
-  letter-spacing: 0;
-  line-height: 1.4;
-}
-
-/* ===================================
    FORMS & INPUTS
 =================================== */
 .form-group {
@@ -1057,7 +1022,7 @@ input[type="checkbox"] {
         <h2>Kit Capacity Overview</h2>
         <div class="card-icon card-icon-amber">📊</div>
       </div>
-      <div class="gauge-grid" id="gaugeContainer"><span class="loading">Syncing dashboard data…</span></div>
+      <div id="kitCapacityPieChart" style="height:350px; width:100%;"><span class="loading" style="padding:16px 24px; display:block;">Syncing dashboard data…</span></div>
     </div>
 
     <div class="card-standard">
@@ -1585,7 +1550,7 @@ function showPage(page) {
 }
 
 function fetchAllData() {
-  document.getElementById("gaugeContainer").innerHTML = '<span class="loading">Syncing data with server…</span>';
+  document.getElementById("kitCapacityPieChart").innerHTML = '<span class="loading" style="padding:16px 24px; display:block;">Syncing data with server…</span>';
   const d = new Date();
   document.getElementById('dashChartMonth').value = d.getMonth() + 1;
   document.getElementById('dashChartYear').value = d.getFullYear();
@@ -1604,29 +1569,33 @@ window.onload = function () { fetchAllData(); };
 
 /* ---- Dashboard ---- */
 function renderDashboard(predictions) {
+  const chartDom = document.getElementById("kitCapacityPieChart");
+  if(!chartDom) return;
+  
+  let myChart = echarts.getInstanceByDom(chartDom);
+  if (myChart) echarts.dispose(myChart);
+
   if (!predictions || !predictions.kits || predictions.kits.length === 0) {
-    document.getElementById("gaugeContainer").innerHTML = "<p style='color:var(--text-3); padding:16px 0;'>No kit configurations found.</p>";
+    chartDom.innerHTML = "<p style='color:var(--text-3); padding:16px 24px;'>No kit configurations found.</p>";
     return;
   }
-  let html = "";
-  predictions.kits.forEach(k => { html += createGauge(k.kit, k.capacity, k.capacity || 1); });
-  document.getElementById("gaugeContainer").innerHTML = html;
-}
 
-function createGauge(title, value, max) {
-  const safePercent = Math.min(max ? (value / max) : 0, 1);
-  const circumference = Math.PI * 90;
-  const offset = circumference - safePercent * circumference;
-  const color = safePercent < 0.2 ? '#ef4444' : safePercent < 0.5 ? '#f59e0b' : '#22c55e';
-  return `<div class="gauge">
-    <h3>${title}</h3>
-    <svg width="200" height="106" viewBox="0 0 220 120">
-      <path d="M20 110 A90 90 0 0 1 200 110" fill="none" stroke="#e2e8f0" stroke-width="18"/>
-      <path d="M20 110 A90 90 0 0 1 200 110" fill="none" stroke="${color}" stroke-width="18" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
-      <text x="110" y="92" text-anchor="middle" font-size="34" font-weight="700" fill="var(--navy-900)" font-family="Inter, sans-serif">${Math.round(value)}</text>
-      <text x="110" y="108" text-anchor="middle" font-size="11" fill="var(--navy-400)" font-family="Inter, sans-serif">units</text>
-    </svg>
-  </div>`;
+  myChart = echarts.init(chartDom);
+  const pieData = predictions.kits.map(k => ({ name: k.kit, value: k.capacity || 0 }));
+
+  myChart.setOption({
+    tooltip: { trigger: 'item', backgroundColor: '#0f172a', borderColor: '#1e293b', textStyle: { color: '#f1f5f9', fontSize: 13 } },
+    legend: { orient: 'horizontal', bottom: 0, textStyle: { color: '#475569' } },
+    series: [{
+      name: 'Kit Capacity',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: true,
+      itemStyle: { borderRadius: 5, borderColor: '#fff', borderWidth: 2 },
+      label: { show: true, formatter: '{b}: {c}', color: '#475569', fontWeight: 'bold' },
+      data: pieData
+    }]
+  });
 }
 
 function renderStock(data) {
@@ -1914,21 +1883,32 @@ function loadDashboardChart() {
   if (myChart) echarts.dispose(myChart);
   myChart = echarts.init(chartDom);
   myChart.showLoading({ text: 'Loading chart data…', color: '#f59e0b', fontSize: 13 });
+  
   apiCall("getMonthlyReport", "GET", { month, year }).then(data => {
     myChart.hideLoading();
     const kits = Object.keys(data);
     const quantities = Object.values(data);
+    
     if (kits.length === 0) {
       myChart.dispose();
       chartDom.innerHTML = "<div style='text-align:center; padding-top:140px; color:var(--text-3); font-weight:500;'>No kit dispatches found for this period.</div>";
       return;
     }
+    
+    const pieData = Object.keys(data).map(key => ({ name: key, value: data[key] }));
+    
     myChart.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: '#0f172a', borderColor: '#1e293b', textStyle: { color: '#f1f5f9', fontSize: 13 } },
-      grid: { left: '2%', right: '4%', bottom: '18%', top: '6%', containLabel: true },
-      xAxis: { type: 'category', data: kits, axisLabel: { interval: 0, rotate: 15, color: '#94a3b8', fontSize: 12 }, axisLine: { lineStyle: { color: '#e2e8f0' } } },
-      yAxis: { type: 'value', name: 'Dispatches', nameTextStyle: { color: '#94a3b8', fontSize: 11 }, axisLabel: { color: '#94a3b8', fontSize: 12 }, splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } } },
-      series: [{ name: 'Kits Dispatched', type: 'bar', barWidth: '45%', data: quantities, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#fbbf24' }, { offset: 1, color: '#f59e0b' }] }, borderRadius: [5, 5, 0, 0] } }]
+      tooltip: { trigger: 'item', backgroundColor: '#0f172a', borderColor: '#1e293b', textStyle: { color: '#f1f5f9', fontSize: 13 } },
+      legend: { orient: 'horizontal', bottom: 0, textStyle: { color: '#475569' } },
+      series: [{
+        name: 'Kits Dispatched',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: true,
+        itemStyle: { borderRadius: 5, borderColor: '#fff', borderWidth: 2 },
+        label: { show: true, formatter: '{b}: {c}', color: '#475569', fontWeight: 'bold' },
+        data: pieData
+      }]
     });
   }).catch(() => {
     myChart.dispose();
